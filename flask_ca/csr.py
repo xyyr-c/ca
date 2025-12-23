@@ -1,7 +1,13 @@
 
 from datetime import datetime
 from flask import Flask, jsonify, request, session, send_from_directory
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+
 def csr_submit1(cursor, req_data):
+    """
+    初步信息的插入
+    """
     resp = {}
 
     # 获取用户上下文
@@ -53,18 +59,12 @@ def csr_submit1(cursor, req_data):
         new_req_id = cursor.lastrowid  # 获取插入的ID
 
     except Exception as e:
-        logger.error(f"Failed to create new certificate request: {e}")
         resp['header'] = {'code': 500, 'message': 'Insert certificate request error'}
         return resp
     # 构造响应
     resp['header'] = {'code': 200, 'message': 'Success'}
+    resp["csr_id"] = new_req_id
     return resp
-
-
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-
-
 def generate_rsa_keys_using_cryptography():
     """
     使用 cryptography 库生成 RSA 密钥对
@@ -99,4 +99,3 @@ def generate_rsa_keys_using_cryptography():
     resp["pu_key"] = public_key_pem.decode('utf-8')
 
     return resp
-

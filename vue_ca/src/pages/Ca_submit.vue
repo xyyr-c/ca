@@ -136,9 +136,8 @@
     <div v-if="step == 2">
       <el-card class="box-card2" shadow="hover">
         <div class="success1">成功</div>
-        <div class="success2">恭喜您，证书申请成功！</div>
-        <div class="success2">点击下方按钮下载您的证书</div>
-        <button class="download" @click="downloadCa()">下载证书</button>
+        <div class="success2">证书已申请，请等待管理员审核！</div>
+
       </el-card>
     </div>
   </div>
@@ -209,7 +208,7 @@
     // 提交表单
   const submitForm = () => {
     // 处理表单提交逻辑
-      axios.post('/api/ca/csr', {
+      axios.post('/api/ca/csr_info', {
       "country": ruleForm.country,
       "province": ruleForm.province,
       "locality": ruleForm.locality,
@@ -251,7 +250,7 @@
       axios.post('/api/gen_rsa',
         { withCredentials: true }).then(response => {
           // 处理登出逻辑
-          console.log(response.data);
+          // console.log(response.data);
           // console.log(response.data.header.code);
           if (response.data.header.code == 200)
             {
@@ -267,7 +266,8 @@
       }
     //提交公钥信息
     const submitPublicKey =() =>{
-      axios.post('/api/audit/pass', {
+      console.log(csr_id.value)
+      axios.post('/api/pub', {
         "public_key": pu_key_show.value,
         "csr_id": csr_id.value,
       },{ withCredentials: true }).then(response => {

@@ -17,7 +17,7 @@ CREATE TABLE `cert_requests` (
   `email` VARCHAR(255) DEFAULT NULL COMMENT '邮箱',
   PRIMARY KEY (`req_id`),
   KEY `idx_removed` (`removed_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='证书请求表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='证书表';
 
 CREATE TABLE `issued_certs` (
   `cert_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -32,16 +32,6 @@ CREATE TABLE `issued_certs` (
   KEY `idx_removed` (`removed_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='已签发证书表';
 
-CREATE TABLE `revocations` (
-  `revoke_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `created_time` DATETIME DEFAULT NULL,
-  `modified_time` DATETIME DEFAULT NULL,
-  `removed_time` DATETIME DEFAULT NULL,
-  `cert_id` INT NOT NULL COMMENT '证书ID',
-  `revoked_at` BIGINT NOT NULL COMMENT '吊销时间戳',
-  PRIMARY KEY (`revoke_id`),
-  KEY `idx_removed` (`removed_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='证书吊销表';
 
 CREATE TABLE `accounts` (
   `uid` INT UNSIGNED NOT NULL AUTO_INCREMENT,

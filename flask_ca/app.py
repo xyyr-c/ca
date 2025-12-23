@@ -1,12 +1,16 @@
 from dbutils.pooled_db import PooledDB
 from flask import Flask, jsonify, request, session, send_from_directory
 from flask_session import Session
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.backends import default_backend
 import os
 import redis
 import pymysql
 import bcrypt
 from flask_cors import CORS
 from csr import *
+
 POOL = PooledDB(
     creator=pymysql,
     maxconnections=5,
@@ -20,6 +24,7 @@ POOL = PooledDB(
     port=3306,  # 端口，默认为3306
     db='CertAuth',  # 数据库名称
     charset='utf8mb4',  # 字符编码
+    autocommit=True  # 增加自动提交
 )
 app = Flask(__name__)
 CORS(app,supports_credentials=True)  # 跨域支持
@@ -119,14 +124,14 @@ def logout():
 #     hashed_pwd = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt())
 #     print(hashed_pwd)
 
-@app.route("/api/ca/csr", methods=['POST'])
+@app.route("/api/ca/csr_info", methods=['POST'])
 def csr_submit_info():
     resp = {}
     conn = POOL.connection()
     cursor = conn.cursor()
     try:
-        crs_info = request.get_json()
-        resp = csr_submit1(cursor, crs_info)
+        csr_info = request.get_json()
+        resp = csr_submit1(cursor, csr_info)
         conn.commit()
         cursor.close()
         conn.close()
@@ -138,6 +143,78 @@ def csr_submit_info():
 def csr_submit_public_key():
     resp = generate_rsa_keys_using_cryptography()
     return jsonify(resp)
+@app.route("/api/pub",methods=['POST'])
+def csr_submit_pub():
+    resp = {}
+    conn = POOL.connection()
+    cursor = conn.cursor()
+    request_info = request.get_json()
+    csr_id = request_info.get('csr_id')
+    pub_key = request_info.get('public_key')
+    # print(request_info)
+    try:
+        cursor.execute(f"SELECT * FROM cert_requests WHERE req_id = {csr_id}")
+        csr = cursor.fetchone()
+        print(csr)
+    except Exception as e:
+        resp['header'] = {'code': 500, 'message': 'SelectCSRByID Error'}
+        return resp
+
+    update_sql = """
+            UPDATE cert_requests
+            SET pub_key = %s
+            WHERE req_id = %s"""
+    cursor.execute(update_sql, (pub_key, csr_id))
+
+    resp['header'] = {'code': 200, 'message': 'Success'}
+    return jsonify(resp)
+@app.route("/api/ca/read_csr",methods=['POST'])
+def csr_file_read():
+    resp = {}
+    csr_file = request.files['csr']
+    csr_data = csr_file.read()
+    # print(csr_data)
+ # 加载CSR
+    try:
+        csr = x509.load_pem_x509_csr(csr_data, default_backend())
+    except:
+        csr = x509.load_der_x509_csr(csr_data, default_backend())
+
+    # 提取关键字段
+    subject = csr.subject
+    csr_info = {
+        'country': subject.get_attributes_for_oid(NameOID.COUNTRY_NAME)[0].value if subject.get_attributes_for_oid(
+            NameOID.COUNTRY_NAME) else '',
+        'province': subject.get_attributes_for_oid(NameOID.STATE_OR_PROVINCE_NAME)[
+            0].value if subject.get_attributes_for_oid(NameOID.STATE_OR_PROVINCE_NAME) else '',
+        'locality': subject.get_attributes_for_oid(NameOID.LOCALITY_NAME)[
+            0].value if subject.get_attributes_for_oid(NameOID.LOCALITY_NAME) else '',
+        'organization': subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[
+            0].value if subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME) else '',
+        'organizational_unit': subject.get_attributes_for_oid(NameOID.ORGANIZATIONAL_UNIT_NAME)[
+            0].value if subject.get_attributes_for_oid(NameOID.ORGANIZATIONAL_UNIT_NAME) else '',
+        'common_name': subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
+            0].value if subject.get_attributes_for_oid(NameOID.COMMON_NAME) else '',
+        'email_address': subject.get_attributes_for_oid(NameOID.EMAIL_ADDRESS)[0].value if subject.get_attributes_for_oid(
+            NameOID.EMAIL_ADDRESS) else '',
+    }
+    # print(csr_info)
+    conn = POOL.connection()
+    cursor = conn.cursor()
+    try:
+        resp = csr_submit1(cursor, csr_info)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify(resp)
+    except Exception as e:
+        print(e)
+        return jsonify(msg="出错了，请检查")
+
+
+
+
+
 if __name__ == '__main__':
     # for rule in app.url_map.iter_rules():
     #     print(rule)
