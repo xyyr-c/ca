@@ -1,5 +1,5 @@
 from dbutils.pooled_db import PooledDB
-from flask import Flask, jsonify, request, session, send_from_directory
+from flask import Flask, jsonify, request, session, send_file,abort
 from flask_session import Session
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -217,7 +217,68 @@ def csr_file_read():
 
 @app.route("/api/cert/query",methods=['POST'])
 def csr_search():
-    
+    resp = {}
+    conn = POOL.connection()
+    cursor = conn.cursor()
+    user = session.get('user')
+    user_id = user[0]
+    cursor.execute(f"SELECT * FROM cert_requests WHERE uid = {user_id}")
+    columns = [col[0] for col in cursor.description]
+    certs = cursor.fetchall()
+    certs_dict = []
+    for cert in certs:
+        cert = dict(zip(columns, cert))
+        # print(cert)
+        cert["cert_path"] = f"/certificate/{cert['req_id']}.cer"
+        certs_dict.append(cert)
+    cursor.close()
+    conn.close()
+    resp['certs'] = certs_dict
+    resp['header'] = {'code': 200, 'message': 'Success'}
+    return jsonify(resp)
+
+@app.route("/api/download",methods=['GET'])
+def cer_download():
+
+    file_path = f"./certificate/{request.args.get('cert_path')}.cer"
+    # 检查文件是否存在
+    if not os.path.exists(file_path):
+        abort(404, description="文件不存在")
+
+    # 检查是否是文件
+    if not os.path.isfile(file_path):
+        abort(400, description="请求的不是文件")
+
+    try:
+        # 发送文件给客户端
+        return send_file(
+            file_path,
+            as_attachment=True,  # 作为附件下载
+            download_name=f"{file_path}.cer",  # 下载时显示的文件名
+            mimetype='application/octet-stream'  # 二进制流
+        )
+    except Exception as e:
+        abort(500, description=f"文件发送失败: {str(e)}")
+
+@app.route("/api/cert/revoke",methods=['POST'])
+def cer_revoke():
+    resp = {}
+    conn = POOL.connection()
+    cursor = conn.cursor()
+    request_info = request.get_json()
+    req_id = request_info.get('cert_id')
+    try:
+        update_sql = """
+                UPDATE cert_requests
+                SET status = 3 
+                WHERE req_id = %s"""
+        cursor.execute(update_sql, (req_id,))
+        resp['header'] = {'code':200,"message":'Success'}
+        return jsonify(resp)
+    except Exception as e:
+        print(e)
+        resp['header'] = {'code': 500, 'message': 'revoke error'}
+        return jsonify(resp)
 
 if __name__ == '__main__':
     # for rule in app.url_map.iter_rules():
