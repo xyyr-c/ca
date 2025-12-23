@@ -6,7 +6,7 @@ import redis
 import pymysql
 import bcrypt
 from flask_cors import CORS
-
+from csr import *
 POOL = PooledDB(
     creator=pymysql,
     maxconnections=5,
@@ -104,16 +104,40 @@ def login():
     cursor.close()
     conn.close()
     return jsonify(resp)
+@app.route('/api/auth/logout', methods=["POST"])
+def logout():
+    resp = {}
+    session.pop('user', None)  # 清除 Session
+    resp['status'] = "success"
+    return jsonify(resp)
+# def test():
+#     """
+#     默认管理员的插入
+#     :return:
+#     """
+#     pwd = "admin123!"
+#     hashed_pwd = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt())
+#     print(hashed_pwd)
 
-def test():
-    """
-    默认管理员的插入
-    :return:
-    """
-    pwd = "admin123!"
-    hashed_pwd = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt())
-    print(hashed_pwd)
-
+@app.route("/api/ca/csr", methods=['POST'])
+def csr_submit_info():
+    resp = {}
+    conn = POOL.connection()
+    cursor = conn.cursor()
+    try:
+        crs_info = request.get_json()
+        resp = csr_submit1(cursor, crs_info)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify(resp)
+    except Exception as e:
+        print(e)
+        return jsonify(msg="出错了，请检查")
+@app.route("/api/gen_rsa", methods=['POST'])
+def csr_submit_public_key():
+    resp = generate_rsa_keys_using_cryptography()
+    return jsonify(resp)
 if __name__ == '__main__':
     # for rule in app.url_map.iter_rules():
     #     print(rule)
