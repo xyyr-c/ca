@@ -1,8 +1,26 @@
 
-from datetime import datetime
 from flask import Flask, jsonify, request, session, send_from_directory
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding
+from datetime import datetime, timedelta
+import pdb
+import ipaddress
+import os
+import sys
+import sqlite3
+from typing import Optional, Dict, Any, Tuple
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
+import hashlib
+
 
 def csr_submit1(cursor, req_data):
     """
@@ -99,3 +117,77 @@ def generate_rsa_keys_using_cryptography():
     resp["pu_key"] = public_key_pem.decode('utf-8')
 
     return resp
+
+def load_ca_private_key(key_path: str, password: Optional[bytes] = None):
+    """加载CA私钥"""
+    try:
+        with open(key_path, "rb") as f:
+            private_key = serialization.load_pem_private_key(
+                f.read(),
+                password=password,
+                backend=default_backend()
+            )
+        print(f"CA私钥已加载: {key_path}")
+        return private_key
+    except Exception as e:
+        print(f"加载CA私钥失败: {e}")
+        return None
+def generate_cert(cursor, req_id):
+    try:
+        sql = """
+        SELECT req_id, pub_key, country_code, region, city, 
+               company, department, full_name, email
+        FROM cert_requests 
+        WHERE req_id = %s AND status = 1
+        """
+        # pdb.set_trace()
+        cursor.execute(sql, (req_id,))
+        row = cursor.fetchone()
+        print(row)
+    except Exception as e:
+        print(f"查询证书请求失败: {e}")
+        return None
+    private_key = load_ca_private_key("./localhost.key")
+    public_key = serialization.load_pem_public_key(
+        row[1].encode(),
+        backend=default_backend()
+    )
+    # print(private_key)
+    # 创建签名证书
+    subject = x509.Name([
+        # 必填字段
+        x509.NameAttribute(NameOID.COUNTRY_NAME, row[2]),  # 国家 (C)
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, row[3]),  # 省/州 (ST)
+        x509.NameAttribute(NameOID.LOCALITY_NAME, row[4]),  # 城市/地区 (L)
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, row[5]),  # 组织 (O)
+        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, row[6]),  # 部门 (OU)
+        x509.NameAttribute(NameOID.COMMON_NAME, row[7]),  # 通用名 (CN)
+        x509.NameAttribute(NameOID.EMAIL_ADDRESS, row[8]),  # 邮箱
+    ])
+    with open("localhost.crt", 'rb') as f:
+        ca_cert_data = f.read()
+
+    ca_cert = x509.load_pem_x509_certificate(ca_cert_data, default_backend())
+    issuer = ca_cert.issuer
+
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        public_key
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.utcnow()
+    ).not_valid_after(
+        datetime.utcnow() + timedelta(days=3650)
+    ).add_extension(
+        x509.BasicConstraints(ca=True, path_length=None), critical=True,
+    ).sign(private_key, hashes.SHA256(), default_backend())
+
+    # 保存证书
+    with open(f"./certificate/{row[0]}.cer", "wb") as f:
+        f.write(cert.public_bytes(serialization.Encoding.PEM))
+
+

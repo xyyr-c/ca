@@ -58,4 +58,7 @@ INSERT INTO `accounts` (
 );
 
 
-
+SELECT req_id, pub_key, country_code, region, city, 
+               company, department, full_name, email
+        FROM cert_requests 
+        WHERE req_id = 11

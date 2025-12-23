@@ -79,14 +79,14 @@ def login():
 
     name = request.get_json()['username']
     pwd = request.get_json()['password']
-    print(request.get_json())
+    # print(request.get_json())
     # 从数据库查询用户信息
     try:
         cursor.execute("SELECT * FROM accounts WHERE username = %s", (name,))
     except pymysql.MySQLError as e:
         print(f"Error: {e}")
     user = cursor.fetchone()
-    print(user)
+    # print(user)
     # print(user[3])
     # print(pwd)
     # hashed_pwd = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt())
@@ -155,7 +155,7 @@ def csr_submit_pub():
     try:
         cursor.execute(f"SELECT * FROM cert_requests WHERE req_id = {csr_id}")
         csr = cursor.fetchone()
-        print(csr)
+        # print(csr)
     except Exception as e:
         resp['header'] = {'code': 500, 'message': 'SelectCSRByID Error'}
         return resp
@@ -165,8 +165,10 @@ def csr_submit_pub():
             SET pub_key = %s
             WHERE req_id = %s"""
     cursor.execute(update_sql, (pub_key, csr_id))
-
+    generate_cert(cursor, csr_id)
     resp['header'] = {'code': 200, 'message': 'Success'}
+    cursor.close()
+    conn.close()
     return jsonify(resp)
 @app.route("/api/ca/read_csr",methods=['POST'])
 def csr_file_read():
@@ -213,7 +215,9 @@ def csr_file_read():
 
 
 
-
+@app.route("/api/cert/query",methods=['POST'])
+def csr_search():
+    
 
 if __name__ == '__main__':
     # for rule in app.url_map.iter_rules():
