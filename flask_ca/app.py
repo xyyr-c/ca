@@ -87,6 +87,10 @@ def login():
     # hashed_pwd = bcrypt.hashpw(pwd.encode('utf-8'), bcrypt.gensalt())
     # print(hashed_pwd)
     if user:
+        if user[5]: # 第六列是角色
+            resp['role'] = "1"
+        else:
+            resp['role'] = "0"
         stored_password = user[3]  # 第四列是密码
         # 验证密码是否匹配
         if bcrypt.checkpw(pwd.encode('utf-8'), stored_password.encode('utf-8')):

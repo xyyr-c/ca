@@ -38,12 +38,14 @@
       console.log(response.data);
       if (response.data.status == "success")
       {
-        // document.cookie = "username=" + username.value + "; max-age=" + (7 * 24 * 60 * 60) + "; path=/";
         sessionStorage.setItem("username", username.value)
         mySessionCookie.value = document.cookie
-        console.log("这里是cookie",mySessionCookie.value)
-        console.log(sessionStorage.getItem("username"))
-        window.location.href = "/user"
+        // console.log("这里是cookie",mySessionCookie.value)
+        // console.log(sessionStorage.getItem("username"))
+        if (response.data.role == "1")
+          window.location.href = "/admin"
+        else
+          window.location.href = "/user"
       }
       else
       {
