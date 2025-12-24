@@ -371,7 +371,7 @@ def approve_certificate(cert_id):
         # 更新证书状态为通过（状态2），并设置修改时间
         update_query = """
             UPDATE cert_requests 
-            SET status = 2, modified_time = NOW() 
+            SET status = 2, modified_time = NOW() + INTERVAL 2 YEAR
             WHERE req_id = %s AND status = 1
         """
         cursor.execute(update_query, (cert_id,))
@@ -406,11 +406,11 @@ def revoke_certificate(cert_id):
     try:
         conn = POOL.connection()
         cursor = conn.cursor()
-        
-        # 更新证书状态为吊销（状态3），并设置吊销时间和修改时间
+
+        # 更新证书状态为吊销（状态3），并设置吊销时间
         update_query = """
             UPDATE cert_requests 
-            SET status = 3, removed_time = NOW(), modified_time = NOW() 
+            SET status = 3, removed_time = NOW()
             WHERE req_id = %s AND status = 2
         """
         cursor.execute(update_query, (cert_id,))

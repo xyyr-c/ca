@@ -433,15 +433,15 @@ const formatDate = (dateString: string) => {
 const formatDateTime = (dateTimeString: string | null) => {
   if (!dateTimeString) return '-'
   const date = new Date(dateTimeString)
-  console.log(dateTimeString)
-  console.log('日期时间字符串:', date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }));
+  // console.log(dateTimeString)
+  // console.log('日期时间字符串:', date.toLocaleString('zh-CN', {
+  //   year: 'numeric',
+  //   month: '2-digit',
+  //   day: '2-digit',
+  //   hour: '2-digit',
+  //   minute: '2-digit',
+  //   second: '2-digit'
+  // }));
   return date.toLocaleString('zh-CN', {
     timeZone: 'UTC',
     year: 'numeric',

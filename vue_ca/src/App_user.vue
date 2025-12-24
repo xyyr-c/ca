@@ -45,7 +45,7 @@ const logout = () =>{
         }, 0)
     }
     axios.post('/api/auth/logout', {
-      "username": username
+      "username": username.value
     },{ withCredentials: true }).then(response => {
       // 处理登出逻辑
       console.log(response.data);
