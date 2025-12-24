@@ -10,6 +10,7 @@
     <div class="navigate">
       <RouterLink :to="{name:'search'}" active-class="active" @click="user_test">查询CA证书</RouterLink>
       <RouterLink :to="{name:'submit'}" active-class="active" @click="user_test">注册CA</RouterLink>
+      <RouterLink :to="{name:'upload'}" active-class="active" @click="user_test">上传信息</RouterLink>
       <button class="logout-btn"@click="logout"> 退出登录 </button>
     </div>
     <!-- 展示区 -->
