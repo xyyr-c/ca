@@ -27,7 +27,8 @@
         <div class="card-actions">
           <el-button @click="downloadCa(cert.req_id)" size="small">下载证书</el-button>
           <el-button @click="flushed" size="small">刷新</el-button>
-          <el-button @click="deleteCa(cert.req_id)" size="small">吊销证书</el-button>
+          <!-- 修改这里：添加确认提示 -->
+          <el-button @click="confirmDelete(cert.req_id)" size="small" type="danger">吊销证书</el-button>
         </div>
       </el-card>
     </el-col>
@@ -37,6 +38,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import axios from 'axios';
+import { ElMessageBox, ElMessage } from 'element-plus';
 
 const certs = ref([])
 const status = ref<any>({})
@@ -129,27 +131,49 @@ const downloadCa = (cert_id) => {
     });
 }
 
-  //吊销ca证书
-  const deleteCa = (cert_id) => {
-    axios.post('/api/cert/revoke', {
-      "cert_id": cert_id
-    },{ withCredentials: true }).then(response => {
-      // 处理删除逻辑
-      console.log(response.data);
-      if (response.data.header.message == "Success")
-      {
-        status.value[cert_id] = 3;
-        //certs中删除该证书,可以使得卡片动态变化。
-        certs.value = certs.value.filter(cert => cert.req_id !== cert_id)
-      }
-      else
-      {
-        alert("删除失败，请重试")
-      }
-    }).catch((error) => {
-      alert("错误，请联系网站管理员")
+// 添加确认删除函数
+const confirmDelete = (cert_id) => {
+  ElMessageBox.confirm(
+    `确定要吊销证书 ${cert_id} 吗？此操作不可撤销。`,
+    '警告',
+    {
+      confirmButtonText: '确定吊销',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      // 用户确认后执行吊销
+      deleteCa(cert_id);
     })
-  }
+    .catch(() => {
+      // 用户取消操作
+      ElMessage.info('已取消吊销操作');
+    });
+}
+
+//吊销ca证书
+const deleteCa = (cert_id) => {
+  axios.post('/api/cert/revoke', {
+    "cert_id": cert_id
+  },{ withCredentials: true }).then(response => {
+    // 处理删除逻辑
+    console.log(response.data);
+    if (response.data.header.message == "Success")
+    {
+      status.value[cert_id] = 3;
+      //certs中删除该证书,可以使得卡片动态变化。
+      certs.value = certs.value.filter(cert => cert.req_id !== cert_id)
+      ElMessage.success('证书吊销成功');
+    }
+    else
+    {
+      ElMessage.error('删除失败，请重试');
+    }
+  }).catch((error) => {
+    ElMessage.error('错误，请联系网站管理员');
+  })
+}
 </script>
 
 <style scoped>

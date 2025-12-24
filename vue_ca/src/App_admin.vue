@@ -283,7 +283,7 @@
 <script lang="ts" setup name="App">
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-
+import { ElMessage } from 'element-plus'
 // 用户信息
 const username = ref(sessionStorage.getItem("username") || "管理员")
 
@@ -515,7 +515,7 @@ const executeAction = async () => {
 
       // 更新本地状态
       updateCertificateStatus(pendingActionCertId.value, 2)
-      alert('证书审核通过成功')
+      ElMessage.info('证书审核通过成功');
     } else if (confirmAction.value === 'revoke') {
       // 调用吊销API
       await axios.post(`/api/admin/certificates/${pendingActionCertId.value}/revoke`, {}, {
@@ -524,7 +524,7 @@ const executeAction = async () => {
 
       // 更新本地状态
       updateCertificateStatus(pendingActionCertId.value, 3)
-      alert('证书吊销成功')
+      ElMessage.info('证书吊销成功')
     }
 
     showConfirmModal.value = false
