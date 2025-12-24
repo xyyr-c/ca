@@ -3,7 +3,7 @@ use CertAuth;
 CREATE TABLE `cert_requests` (
   `req_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `created_time` DATETIME DEFAULT NULL COMMENT '创建时间',
-  `modified_time` DATETIME DEFAULT NULL COMMENT '修改时间',
+  `modified_time` DATETIME DEFAULT NULL COMMENT '有效时间',
   `removed_time` DATETIME DEFAULT NULL COMMENT '吊销时间',
   `uid` INT NOT NULL COMMENT '申请人ID',
   `status` TINYINT UNSIGNED NOT NULL COMMENT '状态：1-待审 2-通过 3-吊销',
@@ -19,18 +19,6 @@ CREATE TABLE `cert_requests` (
   KEY `idx_removed` (`removed_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='证书表';
 
-CREATE TABLE `issued_certs` (
-  `cert_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `created_time` DATETIME DEFAULT NULL,
-  `modified_time` DATETIME DEFAULT NULL,
-  `removed_time` DATETIME DEFAULT NULL,
-  `uid` INT NOT NULL COMMENT '持有人ID',
-  `status` TINYINT UNSIGNED NOT NULL COMMENT '状态：1-有效 2-失效',
-  `req_id` INT NOT NULL COMMENT '关联请求ID',
-  `expires_at` DATETIME NOT NULL COMMENT '过期时间',
-  PRIMARY KEY (`cert_id`),
-  KEY `idx_removed` (`removed_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='已签发证书表';
 
 
 CREATE TABLE `accounts` (

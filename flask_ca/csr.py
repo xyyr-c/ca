@@ -36,7 +36,7 @@ def csr_submit1(cursor, req_data):
 
     # 构造新的证书请求，映射到正确的数据库字段
     new_csr = {
-        'uid': user[0],  # 对应uid字段
+        'uid': user['uid'],  # 对应uid字段
         'status': 1,  # 对应status字段，1-待审
         'pub_key': req_data.get('public_key', ''),  # 对应pub_key字段
         'country_code': req_data.get('country'),  # 对应country_code字段
@@ -60,7 +60,7 @@ def csr_submit1(cursor, req_data):
 
         cursor.execute(sql, (
             current_time,  # created_time
-            current_time,  # modified_time
+            None,  # modified_time
             None,  # removed_time (初始为NULL)
             new_csr['uid'],
             new_csr['status'],
@@ -149,20 +149,20 @@ def generate_cert(cursor, req_id):
         return None
     private_key = load_ca_private_key("./localhost.key")
     public_key = serialization.load_pem_public_key(
-        row[1].encode(),
+        row['pub_key'].encode(),
         backend=default_backend()
     )
     # print(private_key)
     # 创建签名证书
     subject = x509.Name([
         # 必填字段
-        x509.NameAttribute(NameOID.COUNTRY_NAME, row[2]),  # 国家 (C)
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, row[3]),  # 省/州 (ST)
-        x509.NameAttribute(NameOID.LOCALITY_NAME, row[4]),  # 城市/地区 (L)
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, row[5]),  # 组织 (O)
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, row[6]),  # 部门 (OU)
-        x509.NameAttribute(NameOID.COMMON_NAME, row[7]),  # 通用名 (CN)
-        x509.NameAttribute(NameOID.EMAIL_ADDRESS, row[8]),  # 邮箱
+        x509.NameAttribute(NameOID.COUNTRY_NAME, row['country_code']),  # 国家 (C)
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, row['region']),  # 省/州 (ST)
+        x509.NameAttribute(NameOID.LOCALITY_NAME, row['city']),  # 城市/地区 (L)
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, row['company']),  # 组织 (O)
+        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, row['department']),  # 部门 (OU)
+        x509.NameAttribute(NameOID.COMMON_NAME, row['full_name']),  # 通用名 (CN)
+        x509.NameAttribute(NameOID.EMAIL_ADDRESS, row['email']),  # 邮箱
     ])
     with open("localhost.crt", 'rb') as f:
         ca_cert_data = f.read()
@@ -187,7 +187,7 @@ def generate_cert(cursor, req_id):
     ).sign(private_key, hashes.SHA256(), default_backend())
 
     # 保存证书
-    with open(f"./certificate/{row[0]}.cer", "wb") as f:
+    with open(f"./certificate/{row['req_id']}.cer", "wb") as f:
         f.write(cert.public_bytes(serialization.Encoding.PEM))
 
 

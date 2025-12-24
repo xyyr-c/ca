@@ -1,8 +1,9 @@
 <template>
-  <div class="app">
 
+  <div class="app">
     <!-- 头部区 -->
     <div class="header">
+      你好{{username}}
       <h4>CA证书管理系统</h4>
     </div>
     <!-- 导航区 -->
@@ -21,10 +22,11 @@
 <script lang="ts" setup name="App">
   import {RouterView,RouterLink} from 'vue-router'
   import axios from 'axios'
-
+  import { ref } from 'vue'
+  import { onMounted } from 'vue'
+  const username = ref(sessionStorage.getItem("username"))
   const user_test = ()=>{
-    let username = sessionStorage.getItem("username")
-    if (username == null)
+    if (username.value == null)
     {
       alert("您还没有登录，请先登录！")
       setTimeout(function() {
@@ -32,17 +34,16 @@
         }, 0)
     }
   }
-
-  const logout = () =>{
-    let username = sessionStorage.getItem("username")
-    if (username == null)
+onMounted(() => {
+    user_test()})
+const logout = () =>{
+    if (username.value == null)
     {
       alert("您还没有登录，请先登录！")
       setTimeout(function() {
         window.location.replace("/login");
         }, 0)
     }
-    //http://127.0.0.1:5000/api/auth/logout
     axios.post('/api/auth/logout', {
       "username": username
     },{ withCredentials: true }).then(response => {
