@@ -12,7 +12,7 @@ import pymysql
 import bcrypt
 from flask_cors import CORS
 from csr import *
-
+from upload_person import *
 POOL = PooledDB(
 
     creator=pymysql,
@@ -437,6 +437,82 @@ def revoke_certificate(cert_id):
         return jsonify({
             "status": "error",
             "message": str(e)
+        }), 500
+
+
+@app.route('/api/cert/auth_cer', methods=['POST'])
+def upload_personal_info():
+    """
+    处理个人信息文件上传
+    前端字段名为 'cert'（FormData中append的字段）
+    """
+    # 检查是否有文件
+    if 'cert' not in request.files:
+        return jsonify({
+            'header': {
+                'code': 400,
+                'message': '没有选择文件'
+            }
+        }), 400
+
+    file = request.files['cert']
+
+    # 检查文件名是否为空
+    if file.filename == '':
+        return jsonify({
+            'header': {
+                'code': 400,
+                'message': '没有选择文件'
+            }
+        }), 400
+    username = request.form.get('username')
+    original_filename = file.filename
+    file_extension = os.path.splitext(original_filename)[1]
+
+    # 获取用户文件夹
+    user_folder = get_user_folder(username)
+
+    # 完整文件路径
+    file_path = os.path.join(user_folder, original_filename)
+
+    try:
+        # 保存文件
+        file.save(file_path)
+        # 记录文件信息（可选，可以保存到数据库）
+        file_info = {
+            'original_filename': original_filename,
+            'saved_filename': original_filename,
+            'file_path': file_path,
+            'file_size': os.path.getsize(file_path),
+            'upload_time': datetime.now().isoformat(),
+            'username': username,
+            'file_type': file_extension[1:].lower() if file_extension else 'unknown'
+        }
+
+        # 这里可以保存file_info到数据库
+
+        print(f"文件已保存: {file_info}")  # 调试信息
+
+        return jsonify({
+            'header': {
+                'code': 200,
+                'message': '个人信息文件上传成功'
+            },
+            'data': {
+                'filename': original_filename,
+                'saved_as': original_filename,
+                'upload_time': file_info['upload_time'],
+                'file_size': file_info['file_size']
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"文件保存失败: {str(e)}")
+        return jsonify({
+            'header': {
+                'code': 500,
+                'message': f'文件保存失败: {str(e)}'
+            }
         }), 500
 
 
