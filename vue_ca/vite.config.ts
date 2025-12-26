@@ -23,8 +23,8 @@ export default defineConfig({
     host: "0.0.0.0",
     https:
     {
-      key: fs.readFileSync("./https/web.pkey"),
-      cert: fs.readFileSync("./https/web.crt"),
+      key: fs.readFileSync("./https/test.pkey"),
+      cert: fs.readFileSync("./https/test.cer"),
     },
     proxy: {
         '/api':

@@ -40,9 +40,11 @@
                 <div class="el-upload__text">
                   将文件拖到此处，或<em>点击上传</em>
                 </div>
-                <div class="el-upload__tip" slot="tip">
+                <template v-slot:tip>
+<div class="el-upload__tip" >
                   请上传 csr 文件，大小不要超过 100 KB
                 </div>
+</template>
               </el-upload>
             </el-card>
           </div>
@@ -101,13 +103,13 @@
                 :autosize="{ minRows: 15, maxRows: 15 }"
                 placeholder="RSA公钥生成"
               >
-              <el-card class="box-card-pub" shadow="hover" >
+              <el-card class="box-card-pub" shadow="hover"  >
                 <h4>这是生成的公钥 </h4>
-                <el-input v-model="pu_key" :autosize="{ minRows: 15, maxRows: 15 }"></el-input>
+                <el-input v-model="pu_key" :autosize="{ minRows: 15, maxRows: 15 }" type="textarea"></el-input>
               </el-card>
               <el-card class="box-card-pri" shadow="hover">
                 <h4>这是生成的私钥，请自行保存，不要泄露给别人，本服务器不会存储您的私钥</h4>
-                <el-input v-model="pr_key" :autosize="{ minRows: 15, maxRows: 15 }"></el-input>
+                <el-input v-model="pr_key" :autosize="{ minRows: 15, maxRows: 15 }" type="textarea"></el-input>
               </el-card>
               </el-card>
               <el-button type="primary" @click="autoGetKey" class="but"
@@ -257,8 +259,9 @@
               pr_key.value = response.data.pr_key
               pu_key.value = response.data.pu_key
               pu_key_show.value = response.data.pu_key
-              // console.log(pr_key.value)
-              // console.log(pu_key.value)
+              console.log(pr_key.value)
+              console.log(pu_key.value)
+              console.log(pu_key_show.value)
             }
         }).catch(error => {
           alert("出错了，请联系网站管理员修复。")

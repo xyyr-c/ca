@@ -181,7 +181,7 @@ def generate_cert(cursor, req_id):
     ).not_valid_before(
         datetime.utcnow()
     ).not_valid_after(
-        datetime.utcnow() + timedelta(days=3650)
+        datetime.utcnow() + timedelta(days=730)
     ).add_extension(
         x509.BasicConstraints(ca=True, path_length=None), critical=True,
     ).sign(private_key, hashes.SHA256(), default_backend())

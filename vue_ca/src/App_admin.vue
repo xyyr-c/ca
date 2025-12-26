@@ -373,7 +373,6 @@ const paginatedCertificates = computed(() => {
 // 方法
 const fetchCertificates = async () => {
   try {
-    // TODO: 根据实际API路径调整
     const response = await axios.get('/api/admin/certificates', {
       withCredentials: true
     })
@@ -453,13 +452,14 @@ const formatDateTime = (dateTimeString: string | null) => {
   })
 }
 
-// 判断证书是否过期（假设证书有效期为1年）
+// 判断证书是否过期（假设证书有效期为2年）
 const isExpired = (cert: any) => {
+  let createdDate = new Date(cert.created_time)
   if (!cert.created_time) return false
-  const createdDate = new Date(cert.created_time)
+  if(cert.modified_time!=null)  createdDate= new Date(cert.modified_time)
   const expiryDate = new Date(createdDate)
-  expiryDate.setFullYear(expiryDate.getFullYear() + 2) // 有效期1年
-
+  expiryDate.setFullYear(expiryDate.getFullYear() + 2) // 有效期2年
+  console.log('证书过期时间:', expiryDate,cert.modified_time)
   return new Date() > expiryDate
 }
 
@@ -614,7 +614,7 @@ const downloadCa = (cert_id) => {
 
 // 登录检查
 const user_test = () => {
-  let username = sessionStorage.getItem("username")
+  const username = sessionStorage.getItem("username")
   if (username == null) {
     alert("您还没有登录，请先登录！")
     setTimeout(function() {
@@ -624,7 +624,7 @@ const user_test = () => {
 }
 
 const logout = () => {
-  let username = sessionStorage.getItem("username")
+  const username = sessionStorage.getItem("username")
   if (username == null) {
     alert("您还没有登录，请先登录！")
     setTimeout(function() {

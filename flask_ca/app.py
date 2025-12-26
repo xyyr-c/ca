@@ -466,6 +466,10 @@ def upload_personal_info():
             }
         }), 400
     username = request.form.get('username')
+    # print(type(username))
+    # user = session.get('user')
+    # user_id = user['uid']
+    # print(user_id)
     original_filename = file.filename
     file_extension = os.path.splitext(original_filename)[1]
 
